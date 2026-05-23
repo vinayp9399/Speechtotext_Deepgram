@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 
 const transcriptionSchema = new mongoose.Schema(
   {
+    
     fileName: {
       type: String,
       required: true,
@@ -24,6 +25,8 @@ const transcriptionSchema = new mongoose.Schema(
       type: Number,
       default: null,
     },
+
+    
     transcript: {
       type: String,
       required: true,
@@ -38,7 +41,7 @@ const transcriptionSchema = new mongoose.Schema(
       default: "en",
     },
 
-    // Deepgram metadata
+    
     deepgramModel: {
       type: String,
       default: "nova-2",
@@ -47,6 +50,8 @@ const transcriptionSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+
+    
     status: {
       type: String,
       enum: ["pending", "processing", "completed", "failed"],
@@ -57,17 +62,18 @@ const transcriptionSchema = new mongoose.Schema(
       default: null,
     },
 
+    
     userId: {
       type: String,
       default: null,
     },
   },
   {
-    timestamps: true,
+    timestamps: true, 
   }
 );
 
-// Index for faster queries
+
 transcriptionSchema.index({ createdAt: -1 });
 transcriptionSchema.index({ userId: 1, createdAt: -1 });
 

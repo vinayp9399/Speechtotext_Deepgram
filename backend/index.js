@@ -2,14 +2,13 @@ require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
-const morgan = require("morgan");
 const connectDB = require("./config/db");
 
 const uploadRoutes = require("./routes/upload");
 const transcriptionRoutes = require("./routes/transcriptions");
 
 const app = express();
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 5000;
 
 connectDB();
 
@@ -22,9 +21,9 @@ app.use(
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(morgan("dev"));
 
 app.use("/api/upload", uploadRoutes);
+app.use("/api/transcriptions", transcriptionRoutes);
 
 app.get("/", (req, res) => {
   res.json({
@@ -32,11 +31,6 @@ app.get("/", (req, res) => {
   });
 });
 
-app.use((req, res) => {
-  res.status(404).json({ error: "Route not found" });
-});
-
-
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost: ${PORT}`);
+  console.log(`Server running on http://localhost:${PORT}`);
 });
