@@ -1,20 +1,16 @@
 import { useState, useRef } from "react";
-import { uploadAudio } from "../utils/api";
+import axios from "axios";
 
 export default function Home() {
-  
   const [selectedFile, setSelectedFile] = useState(null);
   const [dragOver, setDragOver] = useState(false);
-
- 
   const [isRecording, setIsRecording] = useState(false);
-  const mediaRecorderRef = useRef(null);
-  const audioChunksRef = useRef([]);
-
-
   const [loading, setLoading] = useState(false);
   const [transcript, setTranscript] = useState(null);
   const [error, setError] = useState(null);
+
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
 
   const handleFileInput = (e) => {
     setSelectedFile(e.target.files[0]);
@@ -33,12 +29,10 @@ export default function Home() {
     }
   };
 
-  
   const startRecording = async () => {
     setError(null);
     setTranscript(null);
     setSelectedFile(null);
-
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream);
@@ -70,27 +64,33 @@ export default function Home() {
     }
   };
 
-  
   const handleTranscribe = async () => {
     if (!selectedFile) return;
-
     setLoading(true);
     setError(null);
     setTranscript(null);
 
     try {
-      const res = await uploadAudio(selectedFile);
+      const formData = new FormData();
+      formData.append("audio", selectedFile);
+
+      const res = await axios.post("http://localhost:5000/api/upload", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+        timeout: 120000,
+      });
+
       setTranscript(res.data.transcription);
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.error || err.message || "Something went wrong.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="space-y-8">
-     
+    <div className="space-y-6">
+
+      
       <div
         onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
         onDragLeave={() => setDragOver(false)}
@@ -108,21 +108,16 @@ export default function Home() {
           className="hidden"
           onChange={handleFileInput}
         />
-
         {selectedFile ? (
           <div className="space-y-1">
             <p className="text-4xl">🎵</p>
             <p className="font-semibold text-emerald-400">{selectedFile.name}</p>
-            <p className="text-sm text-white/40">
-              {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
-            </p>
+            <p className="text-sm text-white/40">{(selectedFile.size / (1024 * 1024)).toFixed(2)} MB</p>
           </div>
         ) : (
           <div className="space-y-2">
             <p className="text-5xl">📂</p>
-            <p className="text-white/70 font-semibold">
-              Click to upload or drag & drop an audio file
-            </p>
+            <p className="text-white/70 font-semibold">Click to upload or drag & drop an audio file</p>
             <p className="text-sm text-white/30">MP3, WAV, WEBM, OGG, FLAC, M4A · Max 50MB</p>
           </div>
         )}
@@ -165,9 +160,7 @@ export default function Home() {
       
       {loading && (
         <div className="glass rounded-xl p-6 text-center">
-          <p className="text-white/50 animate-pulse">
-            Sending to Deepgram, please wait...
-          </p>
+          <p className="text-white/50 animate-pulse">Sending to Deepgram, please wait...</p>
         </div>
       )}
 
@@ -191,6 +184,7 @@ export default function Home() {
           )}
         </div>
       )}
+
     </div>
   );
 }
