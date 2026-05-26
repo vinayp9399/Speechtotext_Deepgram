@@ -1,22 +1,23 @@
 const express = require("express");
 const router = express.Router();
 const Transcription = require("../models/Transcription");
+const protect = require("../middleware/auth");
+
+
+router.use(protect);
 
 
 router.get("/", async (req, res, next) => {
   try {
-    const { page = 1, limit = 20, status } = req.query;
+    const { page = 1, limit = 20 } = req.query;
 
-    const filter = {};
-    if (status) filter.status = status;
-
-    const transcriptions = await Transcription.find(filter)
+    const transcriptions = await Transcription.find({ userId: req.user._id })
       .sort({ createdAt: -1 })
       .limit(Number(limit))
       .skip((Number(page) - 1) * Number(limit))
       .select("-__v");
 
-    const total = await Transcription.countDocuments(filter);
+    const total = await Transcription.countDocuments({ userId: req.user._id });
 
     res.json({
       transcriptions,
@@ -34,9 +35,11 @@ router.get("/", async (req, res, next) => {
 
 router.get("/:id", async (req, res, next) => {
   try {
-    const transcription = await Transcription.findById(req.params.id).select(
-      "-__v"
-    );
+    const transcription = await Transcription.findOne({
+      _id: req.params.id,
+      userId: req.user._id,
+    }).select("-__v");
+
     if (!transcription) {
       return res.status(404).json({ error: "Transcription not found." });
     }
@@ -49,7 +52,11 @@ router.get("/:id", async (req, res, next) => {
 
 router.delete("/:id", async (req, res, next) => {
   try {
-    const transcription = await Transcription.findByIdAndDelete(req.params.id);
+    const transcription = await Transcription.findOneAndDelete({
+      _id: req.params.id,
+      userId: req.user._id,
+    });
+
     if (!transcription) {
       return res.status(404).json({ error: "Transcription not found." });
     }

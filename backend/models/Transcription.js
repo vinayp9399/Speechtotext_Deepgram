@@ -14,7 +14,7 @@ const transcriptionSchema = new mongoose.Schema(
       trim: true,
     },
     fileSize: {
-      type: Number,
+      type: Number, 
       required: true,
     },
     mimeType: {
@@ -22,7 +22,7 @@ const transcriptionSchema = new mongoose.Schema(
       required: true,
     },
     duration: {
-      type: Number,
+      type: Number, 
       default: null,
     },
 
@@ -33,7 +33,7 @@ const transcriptionSchema = new mongoose.Schema(
       default: "",
     },
     confidence: {
-      type: Number, // 0–1, from Deepgram
+      type: Number, 
       default: null,
     },
     language: {

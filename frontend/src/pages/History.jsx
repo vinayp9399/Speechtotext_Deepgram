@@ -1,18 +1,31 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 export default function History() {
   const [transcriptions, setTranscriptions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
+  const token = localStorage.getItem("token");
 
   useEffect(() => {
     const fetchTranscriptions = async () => {
+      if (!token) {
+        navigate("/login");
+        return;
+      }
       try {
-        const res = await axios.get("http://localhost:5000/api/transcriptions");
+        const res = await axios.get("http://localhost:5000/api/transcriptions", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         setTranscriptions(res.data.transcriptions);
       } catch (err) {
-        setError(err.response?.data?.error || err.message || "Failed to fetch transcriptions.");
+        if (err.response?.status === 401) {
+          navigate("/login");
+        } else {
+          setError(err.response?.data?.error || "Failed to fetch transcriptions.");
+        }
       } finally {
         setLoading(false);
       }
@@ -22,10 +35,12 @@ export default function History() {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/api/transcriptions/${id}`);
+      await axios.delete(`http://localhost:5000/api/transcriptions/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setTranscriptions((prev) => prev.filter((t) => t._id !== id));
     } catch (err) {
-      alert("Failed to delete transcription.");
+      alert(err.response?.data?.error || "Failed to delete transcription.");
     }
   };
 
@@ -67,7 +82,6 @@ export default function History() {
         <div className="space-y-4">
           {transcriptions.map((t) => (
             <div key={t._id} className="glass rounded-xl p-5 space-y-3">
-              {/* Card Header */}
               <div className="flex items-start justify-between gap-4">
                 <div className="space-y-0.5">
                   <p className="font-semibold text-white/90 text-sm">{t.originalName}</p>
@@ -85,12 +99,10 @@ export default function History() {
                 </button>
               </div>
 
-              {/* Transcript Text */}
               <p className="text-white/80 text-sm leading-relaxed">
                 {t.transcript || <span className="text-white/30 italic">No transcript available.</span>}
               </p>
 
-              {/* Status Badge */}
               <span className={`inline-block text-xs px-2 py-0.5 rounded-full
                 ${t.status === "completed" ? "bg-emerald-500/15 text-emerald-400" : ""}
                 ${t.status === "failed" ? "bg-red-500/15 text-red-400" : ""}

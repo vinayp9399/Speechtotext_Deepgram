@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 export default function Home() {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -11,6 +12,9 @@ export default function Home() {
 
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
+  const navigate = useNavigate();
+
+  const token = localStorage.getItem("token");
 
   const handleFileInput = (e) => {
     setSelectedFile(e.target.files[0]);
@@ -66,6 +70,12 @@ export default function Home() {
 
   const handleTranscribe = async () => {
     if (!selectedFile) return;
+
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
     setLoading(true);
     setError(null);
     setTranscript(null);
@@ -75,13 +85,21 @@ export default function Home() {
       formData.append("audio", selectedFile);
 
       const res = await axios.post("http://localhost:5000/api/upload", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`,
+        },
         timeout: 120000,
       });
 
       setTranscript(res.data.transcription);
     } catch (err) {
-      setError(err.response?.data?.error || err.message || "Something went wrong.");
+      if (err.response?.status === 401) {
+        setError("Session expired. Please login again.");
+        navigate("/login");
+      } else {
+        setError(err.response?.data?.error || err.message || "Something went wrong.");
+      }
     } finally {
       setLoading(false);
     }
@@ -90,7 +108,6 @@ export default function Home() {
   return (
     <div className="space-y-6">
 
-      
       <div
         onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
         onDragLeave={() => setDragOver(false)}
@@ -123,7 +140,6 @@ export default function Home() {
         )}
       </div>
 
-      
       <div className="flex justify-center">
         {isRecording ? (
           <button
@@ -142,7 +158,6 @@ export default function Home() {
         )}
       </div>
 
-      
       <div className="flex justify-center">
         <button
           onClick={handleTranscribe}
@@ -157,21 +172,18 @@ export default function Home() {
         </button>
       </div>
 
-      
       {loading && (
         <div className="glass rounded-xl p-6 text-center">
           <p className="text-white/50 animate-pulse">Sending to Deepgram, please wait...</p>
         </div>
       )}
 
-      
       {error && (
         <div className="glass rounded-xl p-5 border border-red-500/30 bg-red-500/5">
           <p className="text-red-400 text-sm">{error}</p>
         </div>
       )}
 
-      
       {transcript && (
         <div className="glass rounded-xl p-6 space-y-3">
           <h2 className="font-semibold text-white/80">Transcription</h2>

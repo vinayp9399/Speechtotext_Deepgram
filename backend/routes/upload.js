@@ -5,10 +5,12 @@ const fs = require("fs");
 const upload = require("../middleware/upload");
 const Transcription = require("../models/Transcription");
 const { transcribeAudio } = require("../config/deepgram");
+const protect = require("../middleware/auth");
 
 
-router.post("/", upload.single("audio"), async (req, res, next) => {
+router.post("/", protect, upload.single("audio"), async (req, res, next) => {
   let filePath = null;
+  let transcriptionDoc = null;
 
   try {
     if (!req.file) {
@@ -18,36 +20,45 @@ router.post("/", upload.single("audio"), async (req, res, next) => {
     const { originalname, filename, size, mimetype } = req.file;
     filePath = path.join(__dirname, "../uploads", filename);
 
-    // Save a pending record first
-    const transcription = await Transcription.create({
+    
+    transcriptionDoc = await Transcription.create({
       fileName: filename,
       originalName: originalname,
       fileSize: size,
       mimeType: mimetype,
       transcript: "",
       status: "processing",
+      userId: req.user._id,
     });
 
     
-    const result = await transcribeAudio(filePath, mimetype);
+    let result;
+    try {
+      result = await transcribeAudio(filePath, mimetype);
+    } catch (deepgramError) {
+      
+      transcriptionDoc.status = "failed";
+      transcriptionDoc.errorMessage = deepgramError.message;
+      await transcriptionDoc.save();
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+      return res.status(502).json({ error: "Transcription service failed. Please try again." });
+    }
 
     
-    transcription.transcript = result.transcript;
-    transcription.confidence = result.confidence;
-    transcription.duration = result.duration;
-    transcription.deepgramRequestId = result.requestId;
-    transcription.status = "completed";
-    await transcription.save();
+    transcriptionDoc.transcript = result.transcript;
+    transcriptionDoc.confidence = result.confidence;
+    transcriptionDoc.duration = result.duration;
+    transcriptionDoc.deepgramRequestId = result.requestId;
+    transcriptionDoc.status = "completed";
+    await transcriptionDoc.save();
 
-    
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
 
     res.status(201).json({
       message: "Transcription completed.",
-      transcription,
+      transcription: transcriptionDoc,
     });
   } catch (error) {
-   
     if (filePath && fs.existsSync(filePath)) fs.unlinkSync(filePath);
     next(error);
   }
