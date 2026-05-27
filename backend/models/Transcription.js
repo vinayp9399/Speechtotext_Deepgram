@@ -29,7 +29,6 @@ const transcriptionSchema = new mongoose.Schema(
     
     transcript: {
       type: String,
-      required: true,
       default: "",
     },
     confidence: {

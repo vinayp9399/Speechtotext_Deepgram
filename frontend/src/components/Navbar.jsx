@@ -15,8 +15,8 @@ export default function Navbar() {
   return (
     <header className="border-b border-white/[0.06] sticky top-0 z-50"
       style={{ background: "rgba(13,13,13,0.85)", backdropFilter: "blur(16px)" }}>
-      <nav className="max-w-3xl mx-auto px-6 h-16 flex items-center justify-between">
-        <Link to="/" className="font-bold text-xl tracking-tight text-gradient">
+      <nav className="mx-auto px-6 h-16 flex items-center justify-between">
+        <Link to="/" className="font-bold text-xl tracking-tight">
           VoiceScribe
         </Link>
 
