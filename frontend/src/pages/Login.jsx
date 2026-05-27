@@ -18,7 +18,7 @@ export default function Login() {
     setLoading(true);
     setError(null);
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/login", form);
+      const res = await axios.post("https://speechtotext-deepgram.onrender.com/api/auth/login", form);
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify({ name: res.data.name, email: res.data.email }));
       navigate("/");

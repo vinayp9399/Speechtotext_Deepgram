@@ -16,7 +16,7 @@ export default function History() {
         return;
       }
       try {
-        const res = await axios.get("http://localhost:5000/api/transcriptions", {
+        const res = await axios.get("https://speechtotext-deepgram.onrender.com/api/transcriptions", {
           headers: { Authorization: `Bearer ${token}` },
         });
         setTranscriptions(res.data.transcriptions);
@@ -35,7 +35,7 @@ export default function History() {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/api/transcriptions/${id}`, {
+      await axios.delete(`https://speechtotext-deepgram.onrender.com/api/transcriptions/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setTranscriptions((prev) => prev.filter((t) => t._id !== id));

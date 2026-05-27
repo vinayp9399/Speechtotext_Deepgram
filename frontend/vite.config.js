@@ -8,7 +8,7 @@ export default defineConfig({
     proxy: {
       // Proxy API calls to the Express backend during dev
       "/api": {
-        target: "http://localhost:5000",
+        target: "https://speechtotext-deepgram.onrender.com",
         changeOrigin: true,
       },
     },
